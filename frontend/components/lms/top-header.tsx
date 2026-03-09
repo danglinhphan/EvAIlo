@@ -1,9 +1,11 @@
 "use client"
 
-import { Bell, Sun, Moon, ChevronRight } from "lucide-react"
+import { useState } from "react"
+import { Bell, Sun, Moon, ChevronRight, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { View } from "@/types/lms"
+import type { UserOut } from "@/lib/api/auth"
 
 interface TopHeaderProps {
   currentView: View
@@ -11,6 +13,8 @@ interface TopHeaderProps {
   darkMode: boolean
   onToggleDarkMode: () => void
   onNavigate: (view: View) => void
+  user?: UserOut | null
+  onLogout?: () => void
 }
 
 const VIEW_LABELS: Record<View, string> = {
@@ -56,8 +60,15 @@ export function TopHeader({
   darkMode,
   onToggleDarkMode,
   onNavigate,
+  user,
+  onLogout,
 }: TopHeaderProps) {
+  const [showMenu, setShowMenu] = useState(false)
   const crumbs = getBreadcrumbs(currentView, selectedCourse)
+
+  const initials = user?.name
+    ? user.name.split(" ").slice(0, 2).map((w) => w[0].toUpperCase()).join("")
+    : "?"
 
   return (
     <header className="fixed left-16 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card/95 px-6 backdrop-blur-sm">
@@ -101,13 +112,34 @@ export function TopHeader({
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
-        {/* User profile mockup */}
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
-          aria-label="User profile"
-        >
-          JD
-        </button>
+        {/* User avatar + logout menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu((v) => !v)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+            aria-label="User menu"
+          >
+            {initials}
+          </button>
+
+          {showMenu && (
+            <div className="absolute right-0 top-10 z-50 min-w-[160px] rounded-xl border border-border bg-card shadow-lg py-1">
+              {user && (
+                <div className="px-3 py-2 border-b border-border">
+                  <p className="text-xs font-medium text-foreground truncate">{user.name || user.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+              )}
+              <button
+                onClick={() => { setShowMenu(false); onLogout?.() }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )
